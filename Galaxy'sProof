@@ -1,0 +1,150 @@
+((galaxy -- NOTE THIS IS A LOCALSCRIPT FROM MY GAME I JUST EXPLAINED WHAT EVERRYTHING IS))
+
+
+local UIS = game:GetService("UserInputService") -- key type service
+local TweenService = game:GetService("TweenService") -- tween which makes things smoother
+local Lighting = game:GetService("Lighting") -- the games lighting
+local RunService = game:GetService("RunService") --  runservice which u can use with RunService.Stepped for a loop or something
+local ReplicatedStorage = game:GetService("ReplicatedStorage") -- games replicatedstorage
+local Player = game.Players.LocalPlayer -- your player or the localplayer which is one person playing the game
+local Mouse = Player:GetMouse() -- mouse of the localplayer
+local Character = Player.Character -- character of the localplayer
+local Humanoid = Player.Character:WaitForChild("Humanoid") -- humanoid of the character
+local Main = require(ReplicatedStorage.Modules.EffectHandler) -- a required module
+local Remotes1 = script:WaitForChild("Remotes",999999999) -- a variable 
+local Remotes2 = ReplicatedStorage.Remotes -- variable
+local Camera = workspace.Camera -- the localplayers camera
+local ke_y = Enum.KeyCode.LeftShift -- a key assigned to a local
+local Anim = Instance.new('Animation') -- creating new animation
+Anim.AnimationId = 'rbxassetid://9643379183' -- setting the animation id
+local PlayAnim = Character.Humanoid:LoadAnimation(Anim) -- getting the anim ready to play
+local mainmodule = require(game.ReplicatedStorage.Modules.EffectHandler) -- a module in the gaame
+local CameraShaker = require(game.ReplicatedStorage.Modules.CameraShaker) -- a module
+local ClientModule = { -- a table which has values in it
+	RegularSpeed = 20;
+	RunSpeed = 40;
+	Running = false;
+	Footstepcooldown = false;
+	Moving = false;
+}
+local CameraShake = CameraShaker.new(Enum.RenderPriority.Camera.Value,function(shakeCFrame) -- a function
+	Camera.CFrame = Camera.CFrame * shakeCFrame
+end)
+UIS.InputBegan:Connect(function(input, typing) -- a function (when the localplayer presses a key)
+	if typing then return end -- check if its typing
+  -- all the keys when there pressed
+	if input.KeyCode == Enum.KeyCode.Z then
+		ReplicatedStorage.Remotes["Titan Shift"]:FireServer()
+	elseif input.KeyCode == Enum.KeyCode.T then
+		ReplicatedStorage.Remotes["Scream"]:FireServer()	
+	elseif input.KeyCode == Enum.KeyCode.X then
+		ReplicatedStorage.Remotes["Unshift"]:FireServer()
+	elseif input.KeyCode == Enum.KeyCode.G then
+		ReplicatedStorage.Remotes["Grab"]:FireServer()
+	elseif input.KeyCode == Enum.KeyCode.Y then
+		script.Parent.Remotes["Yell"]:FireServer()
+	elseif input.KeyCode == Enum.KeyCode.J then
+	elseif input.KeyCode == Enum.KeyCode.L then
+		script.Parent.Remotes["SpawnTitan"]:FireServer(Player:GetMouse().Hit)
+	elseif input.KeyCode == Enum.KeyCode.H then
+		Remotes2.Shifter.Harden:FireServer()
+	elseif input.KeyCode == Enum.KeyCode.B then
+		Remotes2.Shifter.Spike:FireServer(Player:GetMouse().Hit)
+	elseif input.KeyCode == Enum.KeyCode.P then
+		Remotes2.Shifter.Crystalize:FireServer()
+	elseif input.KeyCode == Enum.KeyCode.M then	
+		Remotes2.Shifter.Regenerate:FireServer()
+	elseif input.KeyCode == Enum.KeyCode.R then
+		if Player.Character["Flare"] then
+			Player.Character.Flare.Remotes.Reload:FireServer()
+		end
+	elseif input.KeyCode == Enum.KeyCode.C then
+	end
+end)
+
+local function Moved() -- a function which checks if the player is moving
+	if Humanoid.MoveDirection.magnitude > 0 then
+		ClientModule.Moving = true
+	else
+		ClientModule.Moving = false
+	end	
+end
+Humanoid:GetPropertyChangedSignal("MoveDirection"):Connect(Moved) -- this makes the function actually work
+RunService.Stepped:Connect(function() -- a loop.
+	wait()
+	if ClientModule.Moving == true then
+		if Player.Character:FindFirstChild("ShifterForm") then
+			if ClientModule.Footstepcooldown == true then return end
+			ClientModule.Footstepcooldown = true
+			if ClientModule.Running == true then
+				delay(0.2,function()
+					ClientModule.Footstepcooldown = false
+				end)
+			else
+				delay(0.5,function()
+					ClientModule.Footstepcooldown = false
+				end)
+			end
+			local FootStep = game.ReplicatedStorage.SFX.Titans.Footstep:Clone()
+			FootStep.Parent = Player.Character.HumanoidRootPart
+			FootStep:Play()
+			game.Debris:AddItem(FootStep,3)
+		end
+	end
+end)
+UIS.InputBegan:Connect(function(input, processed) -- key function
+	if Player.Character:FindFirstChild("ShifterForm") then
+		if mainmodule.Type(Player) == "Colossal Titan" then
+			ClientModule.RunSpeed = 12
+			ClientModule.RegularSpeed = 6
+		else
+			ClientModule.RunSpeed = 120
+			ClientModule.RegularSpeed = 50
+		end
+	end
+	if processed or not ClientModule.Moving or not game.Players.LocalPlayer.Character.Humanoid then return end
+	if input.UserInputType == Enum.UserInputType.Keyboard then
+		if input.KeyCode == ke_y then
+			if mainmodule.actioncheck(Player.Character) == true then return end
+			TweenService:Create(game.Players.LocalPlayer.Character.Humanoid, TweenInfo.new(0.2), {
+				WalkSpeed = ClientModule.RunSpeed
+			}):Play()
+			PlayAnim:Play(0.2)
+			ClientModule.Running = true
+		end
+	end
+end)
+UIS.InputEnded:Connect(function(input)  -- another key pressed function
+	if not ClientModule.Moving or not game.Players.LocalPlayer.Character.Humanoid then return end
+	if input.KeyCode == ke_y or input.KeyCode == Enum.KeyCode.W then
+		if mainmodule.actioncheck(Player.Character) == true then return end
+		TweenService:Create(game.Players.LocalPlayer.Character.Humanoid, TweenInfo.new(0.2), {
+			WalkSpeed = ClientModule.RegularSpeed
+		}):Play()
+		if PlayAnim then
+			PlayAnim:Stop(false)
+		end
+		ClientModule.Running = false
+		PlayAnim:Stop()
+	end
+end)
+Mouse.Button1Down:Connect(function() checks when the mouse button 1  is clicked
+	ReplicatedStorage.Remotes.Button1:FireServer(Player)
+end)
+Mouse.Button2Down:Connect(function() -- checks when the mouse button 2 is clicked
+	ReplicatedStorage.Remotes.Button2:FireServer(Player)
+end)
+game.ReplicatedStorage.Remotes.Player.CameraShake.OnClientEvent:Connect(function(Type) -- functin w camera manipulation
+	spawn(function()
+		CameraShake:Start()
+		CameraShake:Shake(CameraShaker.Presets[Type])
+	end)
+end)
+game.ReplicatedStorage.Remotes.Player.CameraControl.OnClientEvent:Connect(function(Object,Duration) -- another function which has camera manipulation
+	Camera.CameraType = Enum.CameraType.Scriptable
+		for i = 1,Duration do
+			task.wait()
+			Camera.CFrame = Object.CFrame
+		end
+	print("finished")
+end)
